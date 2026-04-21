@@ -1,12 +1,16 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Magic Retro backend",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --watch index.js",
+    "start": "node index.js"
   },
-  "keywords": [],
+  "keywords": [
+    "express",
+    "retro"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
