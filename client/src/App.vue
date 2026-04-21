@@ -46,6 +46,7 @@ const avatar = ref('')
 const avatarError = ref('')
 const avatarInput = ref<HTMLInputElement | null>(null)
 const MAX_AVATAR_SOURCE_SIZE_BYTES = 8_000_000
+const MAX_PROCESSED_AVATAR_SIZE_BYTES = 250_000
 const AVATAR_MAX_DIMENSION = 128
 const AVATAR_OUTPUT_QUALITY = 0.7
 const AVATAR_DATA_URL_PATTERN = /^data:image\/[a-z0-9.+-]+;base64,/i
@@ -131,9 +132,15 @@ async function processAvatar(file: File): Promise<string> {
     throw new Error('Invalid image dimensions.')
   }
 
-  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(image.width, image.height))
-  const targetWidth = Math.max(1, Math.round(image.width * scale))
-  const targetHeight = Math.max(1, Math.round(image.height * scale))
+  let targetWidth = image.width
+  let targetHeight = image.height
+  if (image.width >= image.height && image.width > AVATAR_MAX_DIMENSION) {
+    targetWidth = AVATAR_MAX_DIMENSION
+    targetHeight = Math.max(1, Math.round((image.height / image.width) * targetWidth))
+  } else if (image.height > image.width && image.height > AVATAR_MAX_DIMENSION) {
+    targetHeight = AVATAR_MAX_DIMENSION
+    targetWidth = Math.max(1, Math.round((image.width / image.height) * targetHeight))
+  }
 
   const canvas = document.createElement('canvas')
   canvas.width = targetWidth
@@ -150,8 +157,31 @@ async function processAvatar(file: File): Promise<string> {
   if (!AVATAR_DATA_URL_PATTERN.test(processedAvatar)) {
     throw new Error('Failed to encode avatar.')
   }
+  if (estimateDataUrlBytes(processedAvatar) > MAX_PROCESSED_AVATAR_SIZE_BYTES) {
+    throw new Error('Processed avatar is too large.')
+  }
 
   return processedAvatar
+}
+
+function estimateDataUrlBytes(dataUrl: string): number {
+  const prefixEnd = dataUrl.indexOf(';base64,')
+  if (prefixEnd === -1) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const base64Data = dataUrl.slice(prefixEnd + ';base64,'.length)
+  if (!base64Data) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  let padding = 0
+  if (base64Data.endsWith('==')) {
+    padding = 2
+  } else if (base64Data.endsWith('=')) {
+    padding = 1
+  }
+  return Math.floor((base64Data.length * 3) / 4) - padding
 }
 
 async function onAvatarSelected(event: Event) {
@@ -179,7 +209,7 @@ async function onAvatarSelected(event: Event) {
     avatar.value = await processAvatar(file)
   } catch {
     avatar.value = ''
-    avatarError.value = 'Could not process that image. Try another one.'
+    avatarError.value = 'Could not process that image. Try a smaller or different one.'
     input.value = ''
   }
 }
