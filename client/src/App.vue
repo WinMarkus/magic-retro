@@ -127,8 +127,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 
 async function processAvatar(file: File): Promise<string> {
   const image = await loadImage(file)
+  if (image.width <= 0 || image.height <= 0) {
+    throw new Error('Invalid image dimensions.')
+  }
 
-  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(1, image.width, image.height))
+  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(image.width, image.height))
   const targetWidth = Math.max(1, Math.round(image.width * scale))
   const targetHeight = Math.max(1, Math.round(image.height * scale))
 
