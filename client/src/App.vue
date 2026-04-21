@@ -45,6 +45,7 @@ const error = ref('')
 const avatar = ref('')
 const avatarError = ref('')
 const avatarInput = ref<HTMLInputElement | null>(null)
+const MAX_AVATAR_SIZE_BYTES = 1_000_000
 
 function randomNameForRole(selectedRole: (typeof roles)[number]) {
   const names = namesByRole[selectedRole]
@@ -128,7 +129,7 @@ async function onAvatarSelected(event: Event) {
     input.value = ''
     return
   }
-  if (file.size > 1_000_000) {
+  if (file.size > MAX_AVATAR_SIZE_BYTES) {
     avatar.value = ''
     avatarError.value = 'Avatar must be 1MB or smaller.'
     input.value = ''
