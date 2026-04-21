@@ -1,0 +1,128 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  background: #f7f2e6;
+  color: #2f2618;
+}
+
+#app {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.panel {
+  background: #fff9ed;
+  border: 2px solid #d4b978;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.7rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  color: #5a4a30;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+select,
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #b89d66;
+  border-radius: 8px;
+  background: #fffef9;
+}
+
+.secondary {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #8f7240;
+  background: #f2e4c1;
+  cursor: pointer;
+}
+
+.contribution {
+  margin-top: 12px;
+}
+
+.add {
+  margin-top: 12px;
+  width: 100%;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #6f4b1f;
+  color: #fff;
+  cursor: pointer;
+}
+
+.add:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.entries li {
+  border: 1px solid #c7ad7a;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fffdf7;
+}
+
+.meta {
+  margin: 0 0 6px;
+  color: #684f2a;
+  font-size: 0.92rem;
+}
+
+.empty {
+  text-align: center;
+  color: #6a604f;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: #9e2f2f;
+  font-weight: 600;
+}
