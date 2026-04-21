@@ -6,6 +6,7 @@ const { randomUUID } = require('crypto');
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const MAX_AVATAR_SIZE_BYTES = 1_000_000;
+const allowedAvatarMimeTypes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 
 const roles = [
   'Knight',
@@ -23,14 +24,45 @@ const roles = [
 const entries = [];
 
 function isValidAvatar(avatarValue) {
-  const match = avatarValue.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/]+=*)$/);
-  if (!match) {
+  const prefixEnd = avatarValue.indexOf(';base64,');
+  if (!avatarValue.startsWith('data:') || prefixEnd === -1) {
     return false;
   }
 
-  const base64Data = match[1];
-  const padding = (base64Data.match(/=*$/)?.[0].length ?? 0);
-  const byteSize = Math.floor((base64Data.length * 3) / 4) - padding;
+  const mimeType = avatarValue.slice(5, prefixEnd).toLowerCase();
+  if (!allowedAvatarMimeTypes.has(mimeType)) {
+    return false;
+  }
+
+  const base64Data = avatarValue.slice(prefixEnd + ';base64,'.length);
+  if (!base64Data || base64Data.length % 4 !== 0) {
+    return false;
+  }
+
+  let padding = 0;
+  for (let i = base64Data.length - 1; i >= 0 && base64Data[i] === '='; i -= 1) {
+    padding += 1;
+  }
+  if (padding > 2) {
+    return false;
+  }
+
+  for (let i = 0; i < base64Data.length - padding; i += 1) {
+    const char = base64Data[i];
+    const isUpper = char >= 'A' && char <= 'Z';
+    const isLower = char >= 'a' && char <= 'z';
+    const isDigit = char >= '0' && char <= '9';
+    if (!isUpper && !isLower && !isDigit && char !== '+' && char !== '/') {
+      return false;
+    }
+  }
+  for (let i = base64Data.length - padding; i < base64Data.length; i += 1) {
+    if (base64Data[i] !== '=') {
+      return false;
+    }
+  }
+
+  const byteSize = (base64Data.length * 3) / 4 - padding;
   return byteSize > 0 && byteSize <= MAX_AVATAR_SIZE_BYTES;
 }
 
