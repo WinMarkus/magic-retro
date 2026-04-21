@@ -49,6 +49,7 @@ const MAX_AVATAR_SOURCE_SIZE_BYTES = 8_000_000
 const MAX_PROCESSED_AVATAR_SIZE_BYTES = 250_000
 const AVATAR_MAX_DIMENSION = 128
 const AVATAR_OUTPUT_QUALITY = 0.7
+const BASE64_SEPARATOR = ';base64,'
 const AVATAR_DATA_URL_PATTERN = /^data:image\/[a-z0-9.+-]+;base64,/i
 
 function randomNameForRole(selectedRole: (typeof roles)[number]) {
@@ -160,12 +161,12 @@ async function processAvatar(file: File): Promise<string> {
 }
 
 function getDataUrlBytes(dataUrl: string): number {
-  const prefixEnd = dataUrl.indexOf(';base64,')
+  const prefixEnd = dataUrl.indexOf(BASE64_SEPARATOR)
   if (prefixEnd === -1) {
     return Number.POSITIVE_INFINITY
   }
 
-  const base64Data = dataUrl.slice(prefixEnd + ';base64,'.length)
+  const base64Data = dataUrl.slice(prefixEnd + BASE64_SEPARATOR.length)
   if (!base64Data) {
     return Number.POSITIVE_INFINITY
   }
@@ -202,9 +203,13 @@ async function onAvatarSelected(event: Event) {
 
   try {
     avatar.value = await processAvatar(file)
-  } catch {
+  } catch (error) {
     avatar.value = ''
-    avatarError.value = 'Could not process that image. Try a smaller or different one.'
+    const message =
+      error instanceof Error && error.message === 'Processed avatar is too large.'
+        ? 'Avatar is still too large after compression. Try a smaller image.'
+        : 'Could not process that image. Try a smaller or different one.'
+    avatarError.value = message
     input.value = ''
   }
 }
