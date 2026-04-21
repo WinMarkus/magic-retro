@@ -66,7 +66,7 @@ function isValidAvatar(avatarValue) {
   return byteSize > 0 && byteSize <= MAX_AVATAR_SIZE_BYTES;
 }
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/entries', (_req, res) => {
   res.json(entries);

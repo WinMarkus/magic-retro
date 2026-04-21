@@ -45,7 +45,10 @@ const error = ref('')
 const avatar = ref('')
 const avatarError = ref('')
 const avatarInput = ref<HTMLInputElement | null>(null)
-const MAX_AVATAR_SIZE_BYTES = 1_000_000
+const MAX_AVATAR_SOURCE_SIZE_BYTES = 8_000_000
+const AVATAR_MAX_DIMENSION = 128
+const AVATAR_OUTPUT_QUALITY = 0.7
+const AVATAR_OUTPUT_PREFIX = 'data:image/jpeg;base64,'
 
 function randomNameForRole(selectedRole: (typeof roles)[number]) {
   const names = namesByRole[selectedRole]
@@ -106,13 +109,49 @@ async function submitEntry() {
   }
 }
 
-function readAsDataUrl(file: File): Promise<string> {
+function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(new Error('Failed to read avatar.'))
-    reader.readAsDataURL(file)
+    const objectUrl = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load avatar image.'))
+    }
+    image.src = objectUrl
   })
+}
+
+async function processAvatar(file: File): Promise<string> {
+  const image = await loadImage(file)
+  if (!image.width || !image.height) {
+    throw new Error('Invalid image dimensions.')
+  }
+
+  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(image.width, image.height))
+  const targetWidth = Math.max(1, Math.round(image.width * scale))
+  const targetHeight = Math.max(1, Math.round(image.height * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+
+  const context = canvas.getContext('2d')
+  if (!context) {
+    throw new Error('Canvas is not available.')
+  }
+
+  context.drawImage(image, 0, 0, targetWidth, targetHeight)
+  const processedAvatar = canvas.toDataURL('image/jpeg', AVATAR_OUTPUT_QUALITY)
+
+  if (!processedAvatar.startsWith(AVATAR_OUTPUT_PREFIX)) {
+    throw new Error('Failed to encode avatar.')
+  }
+
+  return processedAvatar
 }
 
 async function onAvatarSelected(event: Event) {
@@ -129,18 +168,18 @@ async function onAvatarSelected(event: Event) {
     input.value = ''
     return
   }
-  if (file.size > MAX_AVATAR_SIZE_BYTES) {
+  if (file.size > MAX_AVATAR_SOURCE_SIZE_BYTES) {
     avatar.value = ''
-    avatarError.value = 'Avatar must be 1MB or smaller.'
+    avatarError.value = 'Avatar file is too large. Please choose one under 8MB.'
     input.value = ''
     return
   }
 
   try {
-    avatar.value = await readAsDataUrl(file)
+    avatar.value = await processAvatar(file)
   } catch {
     avatar.value = ''
-    avatarError.value = 'Could not load avatar. Try another image.'
+    avatarError.value = 'Could not process that image. Try another one.'
     input.value = ''
   }
 }
