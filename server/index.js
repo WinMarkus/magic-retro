@@ -62,7 +62,7 @@ function isValidAvatar(avatarValue) {
     }
   }
 
-  const byteSize = (base64Data.length * 3) / 4 - padding;
+  const byteSize = Math.floor((base64Data.length * 3) / 4) - padding;
   return byteSize > 0 && byteSize <= MAX_AVATAR_SIZE_BYTES;
 }
 
