@@ -132,15 +132,10 @@ async function processAvatar(file: File): Promise<string> {
     throw new Error('Invalid image dimensions.')
   }
 
-  let targetWidth = image.width
-  let targetHeight = image.height
-  if (image.width >= image.height && image.width > AVATAR_MAX_DIMENSION) {
-    targetWidth = AVATAR_MAX_DIMENSION
-    targetHeight = Math.max(1, Math.round((image.height / image.width) * targetWidth))
-  } else if (image.height > image.width && image.height > AVATAR_MAX_DIMENSION) {
-    targetHeight = AVATAR_MAX_DIMENSION
-    targetWidth = Math.max(1, Math.round((image.width / image.height) * targetHeight))
-  }
+  const longestSide = Math.max(image.width, image.height)
+  const scale = longestSide > AVATAR_MAX_DIMENSION ? AVATAR_MAX_DIMENSION / longestSide : 1
+  const targetWidth = Math.max(1, Math.round(image.width * scale))
+  const targetHeight = Math.max(1, Math.round(image.height * scale))
 
   const canvas = document.createElement('canvas')
   canvas.width = targetWidth
@@ -157,14 +152,14 @@ async function processAvatar(file: File): Promise<string> {
   if (!AVATAR_DATA_URL_PATTERN.test(processedAvatar)) {
     throw new Error('Failed to encode avatar.')
   }
-  if (estimateDataUrlBytes(processedAvatar) > MAX_PROCESSED_AVATAR_SIZE_BYTES) {
+  if (getDataUrlBytes(processedAvatar) > MAX_PROCESSED_AVATAR_SIZE_BYTES) {
     throw new Error('Processed avatar is too large.')
   }
 
   return processedAvatar
 }
 
-function estimateDataUrlBytes(dataUrl: string): number {
+function getDataUrlBytes(dataUrl: string): number {
   const prefixEnd = dataUrl.indexOf(';base64,')
   if (prefixEnd === -1) {
     return Number.POSITIVE_INFINITY
