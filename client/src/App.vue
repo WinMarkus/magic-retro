@@ -6,6 +6,7 @@ type Entry = {
   role: string
   characterName: string
   text: string
+  avatar?: string
   createdAt: number
 }
 
@@ -41,6 +42,9 @@ const text = ref('')
 const entries = ref<Entry[]>([])
 const isSubmitting = ref(false)
 const error = ref('')
+const avatar = ref('')
+const avatarError = ref('')
+const avatarInput = ref<HTMLInputElement | null>(null)
 
 function randomNameForRole(selectedRole: (typeof roles)[number]) {
   const names = namesByRole[selectedRole]
@@ -79,6 +83,7 @@ async function submitEntry() {
         role: role.value,
         characterName: characterName.value,
         text: text.value.trim(),
+        avatar: avatar.value || undefined,
       }),
     })
 
@@ -87,11 +92,80 @@ async function submitEntry() {
     }
 
     text.value = ''
+    avatar.value = ''
+    avatarError.value = ''
+    if (avatarInput.value) {
+      avatarInput.value.value = ''
+    }
     await loadEntries()
   } catch {
     error.value = 'Could not submit your entry. Try again.'
   } finally {
     isSubmitting.value = false
+  }
+}
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('Failed to read avatar.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function onAvatarSelected(event: Event) {
+  avatarError.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    avatar.value = ''
+    return
+  }
+  if (!file.type.startsWith('image/')) {
+    avatar.value = ''
+    avatarError.value = 'Please choose an image file.'
+    input.value = ''
+    return
+  }
+  if (file.size > 1_000_000) {
+    avatar.value = ''
+    avatarError.value = 'Avatar must be 1MB or smaller.'
+    input.value = ''
+    return
+  }
+
+  try {
+    avatar.value = await readAsDataUrl(file)
+  } catch {
+    avatar.value = ''
+    avatarError.value = 'Could not load avatar. Try another image.'
+    input.value = ''
+  }
+}
+
+function clearAvatar() {
+  avatar.value = ''
+  avatarError.value = ''
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
+  }
+}
+
+async function deleteEntry(id: string) {
+  if (!window.confirm('Remove this entry from the scroll?')) {
+    return
+  }
+
+  error.value = ''
+  try {
+    const response = await fetch(`/api/entries/${id}`, { method: 'DELETE' })
+    if (!response.ok) {
+      throw new Error('Failed to delete entry.')
+    }
+    entries.value = entries.value.filter((entry) => entry.id !== id)
+  } catch {
+    error.value = 'Could not remove this entry right now.'
   }
 }
 
@@ -114,8 +188,8 @@ const canSubmit = computed(() => !isSubmitting.value && !!text.value.trim())
 <template>
   <main class="page">
     <section class="panel">
-      <h1>🏰 Magic Retro Icebreaker</h1>
-      <p class="subtitle">Choose your role, claim a name, and add your tale.</p>
+      <h1>🏰 The Chronicle</h1>
+      <p class="subtitle">Choose a role, claim a name, and add your tale.</p>
 
       <div class="form-grid">
         <label>
@@ -133,19 +207,29 @@ const canSubmit = computed(() => !isSubmitting.value && !!text.value.trim())
         </label>
       </div>
 
-      <button class="secondary" type="button" @click="regenerateName">Regenerate Name</button>
+      <button class="secondary" type="button" @click="regenerateName">New Name</button>
 
       <label class="contribution">
-        Contribution
+        Your Tale
         <textarea
           v-model="text"
           rows="3"
-          placeholder="Share one short thought for this retro session..."
+          placeholder="Share one short thought for this session..."
         />
       </label>
 
+      <div class="avatar-upload">
+        <label class="secondary avatar-picker">
+          Add Avatar
+          <input ref="avatarInput" type="file" accept="image/*" @change="onAvatarSelected" />
+        </label>
+        <img v-if="avatar" class="avatar-preview" :src="avatar" alt="Selected avatar preview" />
+        <button v-if="avatar" class="secondary clear-avatar" type="button" @click="clearAvatar">Clear</button>
+      </div>
+      <p v-if="avatarError" class="error">{{ avatarError }}</p>
+
       <button class="add" type="button" :disabled="!canSubmit" @click="submitEntry">
-        + Add Entry
+        Inscribe
       </button>
 
       <p v-if="error" class="error">{{ error }}</p>
@@ -154,14 +238,19 @@ const canSubmit = computed(() => !isSubmitting.value && !!text.value.trim())
     <section class="panel">
       <h2>Shared Scroll</h2>
       <ul class="entries">
-        <li v-for="entry in entries" :key="entry.id">
-          <p class="meta">
-            <strong>{{ entry.role }}</strong> · {{ entry.characterName }} ·
-            {{ new Date(entry.createdAt).toLocaleTimeString() }}
-          </p>
-          <p>{{ entry.text }}</p>
+        <li v-for="entry in entries" :key="entry.id" class="entry">
+          <img v-if="entry.avatar" class="entry-avatar" :src="entry.avatar" :alt="`${entry.characterName} avatar`" />
+          <div v-else class="entry-avatar placeholder">✶</div>
+          <div class="entry-content">
+            <p class="meta">
+              <strong>{{ entry.role }}</strong> · {{ entry.characterName }} ·
+              {{ new Date(entry.createdAt).toLocaleTimeString() }}
+            </p>
+            <p>{{ entry.text }}</p>
+            <button class="secondary delete" type="button" @click="deleteEntry(entry.id)">Delete</button>
+          </div>
         </li>
-        <li v-if="entries.length === 0" class="empty">No entries yet. Be the first hero.</li>
+        <li v-if="entries.length === 0" class="empty">The scroll is empty for now.</li>
       </ul>
     </section>
   </main>

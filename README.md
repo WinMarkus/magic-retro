@@ -1,6 +1,6 @@
 # Magic Retro
 
-Simple medieval-fantasy retrospective icebreaker.
+Simple medieval-fantasy retrospective app.
 
 ## File structure
 
@@ -44,6 +44,7 @@ Requirements: Node.js 18+.
 
 - `GET /api/entries`
 - `POST /api/entries`
+- `DELETE /api/entries/:id`
 
 Data model:
 
@@ -53,6 +54,7 @@ Data model:
   "role": "string",
   "characterName": "string",
   "text": "string",
+  "avatar": "data:image/png;base64,...",
   "createdAt": 1710000000000
 }
 ```

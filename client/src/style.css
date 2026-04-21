@@ -71,6 +71,7 @@ textarea {
   border: 1px solid #8f7240;
   background: #f2e4c1;
   cursor: pointer;
+  font: inherit;
 }
 
 .contribution {
@@ -110,10 +111,72 @@ textarea {
   background: #fffdf7;
 }
 
+.entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.entry-content p {
+  margin: 0;
+}
+
+.entry-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #c7ad7a;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  background: #f2e4c1;
+  color: #6f4b1f;
+  font-weight: 700;
+}
+
+.avatar-upload {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.avatar-picker {
+  margin-top: 0;
+}
+
+.avatar-picker input {
+  display: none;
+}
+
+.avatar-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #c7ad7a;
+}
+
+.clear-avatar {
+  margin-top: 0;
+  padding: 8px 10px;
+}
+
 .meta {
   margin: 0 0 6px;
   color: #684f2a;
   font-size: 0.92rem;
+}
+
+.delete {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
 }
 
 .empty {
