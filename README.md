@@ -15,29 +15,28 @@ magic-retro/
 Requirements: Node.js 18+.
 
 1. Install dependencies:
-   - `npm install --prefix server`
-   - `npm install --prefix client`
+   - `npm run install:all`
 2. Start backend:
-   - `npm run dev --prefix server`
+   - `npm run dev:server`
 3. In a second terminal, start frontend:
-   - `npm run dev --prefix client`
+   - `npm run dev:client`
 4. Open the frontend URL shown by Vite (usually `http://localhost:5173`).
 
 ## Build for production
 
 1. Build frontend:
-   - `npm run build --prefix client`
+   - `npm run build`
 2. Start backend (serves API + built frontend):
-   - `npm run start --prefix server`
+   - `npm start`
 
 ## Render deployment (one Web Service)
 
 - **Service type:** Web Service
 - **Root directory:** repository root (`magic-retro`)
 - **Build command:**
-  - `npm install --prefix server && npm install --prefix client && npm run build --prefix client`
+  - `npm run install:all && npm run build`
 - **Start command:**
-  - `npm run start --prefix server`
+  - `npm start`
 - **Port handling:**
   - No manual setup needed. Server listens on `process.env.PORT` (fallback `3000` locally).
 
