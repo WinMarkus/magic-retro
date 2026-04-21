@@ -48,7 +48,7 @@ const avatarInput = ref<HTMLInputElement | null>(null)
 const MAX_AVATAR_SOURCE_SIZE_BYTES = 8_000_000
 const AVATAR_MAX_DIMENSION = 128
 const AVATAR_OUTPUT_QUALITY = 0.7
-const AVATAR_OUTPUT_PREFIX = 'data:image/jpeg;base64,'
+const AVATAR_DATA_URL_PATTERN = /^data:image\/[a-z0-9.+-]+;base64,/i
 
 function randomNameForRole(selectedRole: (typeof roles)[number]) {
   const names = namesByRole[selectedRole]
@@ -127,11 +127,8 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 
 async function processAvatar(file: File): Promise<string> {
   const image = await loadImage(file)
-  if (!image.width || !image.height) {
-    throw new Error('Invalid image dimensions.')
-  }
 
-  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(image.width, image.height))
+  const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(1, image.width, image.height))
   const targetWidth = Math.max(1, Math.round(image.width * scale))
   const targetHeight = Math.max(1, Math.round(image.height * scale))
 
@@ -147,7 +144,7 @@ async function processAvatar(file: File): Promise<string> {
   context.drawImage(image, 0, 0, targetWidth, targetHeight)
   const processedAvatar = canvas.toDataURL('image/jpeg', AVATAR_OUTPUT_QUALITY)
 
-  if (!processedAvatar.startsWith(AVATAR_OUTPUT_PREFIX)) {
+  if (!AVATAR_DATA_URL_PATTERN.test(processedAvatar)) {
     throw new Error('Failed to encode avatar.')
   }
 
