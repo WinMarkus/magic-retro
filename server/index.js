@@ -5,6 +5,7 @@ const { randomUUID } = require('crypto');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const MAX_AVATAR_SIZE_BYTES = 1_000_000;
 
 const roles = [
   'Knight',
@@ -20,6 +21,18 @@ const roles = [
 ];
 
 const entries = [];
+
+function isValidAvatar(avatarValue) {
+  const match = avatarValue.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/]+=*)$/);
+  if (!match) {
+    return false;
+  }
+
+  const base64Data = match[1];
+  const padding = (base64Data.match(/=*$/)?.[0].length ?? 0);
+  const byteSize = Math.floor((base64Data.length * 3) / 4) - padding;
+  return byteSize > 0 && byteSize <= MAX_AVATAR_SIZE_BYTES;
+}
 
 app.use(express.json());
 
@@ -41,7 +54,7 @@ app.post('/api/entries', (req, res) => {
   if (!nameValue || !textValue) {
     return res.status(400).json({ error: 'characterName and text are required.' });
   }
-  if (avatarValue && !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(avatarValue)) {
+  if (avatarValue && !isValidAvatar(avatarValue)) {
     return res.status(400).json({ error: 'Invalid avatar.' });
   }
 
